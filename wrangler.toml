@@ -1,0 +1,11 @@
+name = "leetcodebot"
+type = "javascript"
+
+account_id = "ad8043c172f95e93320d232f65f696f9"
+workers_dev = true
+route = ""
+zone_id = ""
+compatibility_date = "2022-01-14"
+
+[triggers]
+crons = ["*/5 * * * *"]
