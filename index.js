@@ -1,9 +1,11 @@
-const token = "";
-const bot_username = "";
-const master_id = 12323;
-const chat_id = 123123;
+import config from "./config.json";
+
+const token = config["token"];
+const bot_name = config["bot_name"];
+const master_id = config["master_id"];
+const chat_id = config["chat_id"];
 const base_url = "https://leetcode-cn.com/graphql";
-const leetcode_username = "";
+const leetcode_username = config["leetcode_username"];
 
 addEventListener("fetch", event => {
   event.respondWith(handleRequest(event.request));
@@ -20,7 +22,7 @@ async function handleRequest(request) {
     let text = data.message.text || "";
     let texts = text.split(" ");
     if (text[0] === "/") {
-      texts[0] = texts[0].replace("/", "").replace(bot_username, "");
+      texts[0] = texts[0].replace("/", "").replace(bot_name, "");
       switch (texts[0]) {
         case "start":
           await tg(token, "sendMessage", {
@@ -84,7 +86,7 @@ async function tg(token, type, data) {
   }
 }
 
-profile_data = {
+const profile_data = {
   operationName: "userPublicProfile",
   variables: {
     userSlug: leetcode_username
@@ -93,7 +95,7 @@ profile_data = {
     "query userPublicProfile($userSlug: String!) {\n  userProfilePublicProfile(userSlug: $userSlug) {\n    username\n    haveFollowed\n    siteRanking\n    profile {\n      userSlug\n      realName\n      aboutMe\n      userAvatar\n      location\n      gender\n      websites\n      skillTags\n      contestCount\n      asciiCode\n      medals {\n        name\n        year\n        month\n        category\n        __typename\n      }\n      ranking {\n        rating\n        ranking\n        currentLocalRanking\n        currentGlobalRanking\n        currentRating\n        ratingProgress\n        totalLocalUsers\n        totalGlobalUsers\n        __typename\n      }\n      skillSet {\n        langLevels {\n          langName\n          langVerboseName\n          level\n          __typename\n        }\n        topics {\n          slug\n          name\n          translatedName\n          __typename\n        }\n        topicAreaScores {\n          score\n          topicArea {\n            name\n            slug\n            __typename\n          }\n          __typename\n        }\n        __typename\n      }\n      socialAccounts {\n        provider\n        profileUrl\n        __typename\n      }\n      __typename\n    }\n    educationRecordList {\n      unverifiedOrganizationName\n      __typename\n    }\n    occupationRecordList {\n      unverifiedOrganizationName\n      jobTitle\n      __typename\n    }\n    submissionProgress {\n      totalSubmissions\n      waSubmissions\n      acSubmissions\n      reSubmissions\n      otherSubmissions\n      acTotal\n      questionTotal\n      __typename\n    }\n    __typename\n  }\n}\n"
 };
 
-submission_data = {
+const submission_data = {
   operationName: "recentSubmissions",
   query:
     "query recentSubmissions($userSlug: String!) {\n  recentSubmissions(userSlug: $userSlug) {\n    status\n    lang\n    source {\n      sourceType\n      ... on SubmissionSrcLeetbookNode {\n        slug\n        title\n        pageId\n        __typename\n      }\n      __typename\n    }\n    question {\n      questionFrontendId\n      title\n      translatedTitle\n      titleSlug\n      __typename\n    }\n    submitTime\n    __typename\n  }\n}\n",

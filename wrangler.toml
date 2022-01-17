@@ -1,5 +1,5 @@
 name = "leetcodebot"
-type = "javascript"
+type = "webpack"
 
 account_id = "ad8043c172f95e93320d232f65f696f9"
 workers_dev = true
