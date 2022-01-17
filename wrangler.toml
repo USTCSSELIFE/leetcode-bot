@@ -7,5 +7,9 @@ route = ""
 zone_id = ""
 compatibility_date = "2022-01-14"
 
+kv_namespaces = [
+    { binding = "LEETCODE", id = "7c36e29ff4664667b6cbf2c1e8363292" }
+]
+
 [triggers]
 crons = ["*/5 * * * *"]
