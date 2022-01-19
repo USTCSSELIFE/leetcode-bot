@@ -20,7 +20,7 @@ addEventListener("fetch", event => {
 });
 
 addEventListener("scheduled", event => {
-  event.waitUntil(handleCronRequest());
+  event.waitUntil(handleCronRequest(event));
 });
 
 async function handleRequest(request) {
@@ -39,23 +39,14 @@ async function handleRequest(request) {
           });
           break;
         case "progress":
-          let profile = await getProfile();
-          let submissions = await getSubmission();
-          let todaySubmissions = submissions.filter(submission => {
-            let submitTime = dayjs(submission["submitTime"] * 1000).tz(
-              "Asia/Shanghai"
-            );
-            let startTime = dayjs()
-              .tz("Asia/Shanghai")
-              .startOf("day");
-            let endTime = dayjs()
-              .tz("Asia/Shanghai")
-              .endOf("day");
-            return submitTime.isBetween(startTime, endTime);
-          });
+          let ACTotal = await getACTotal();
+          let pastACTotal = await LEETCODE.get("acTotal");
+          let todaySubmissions = await getTodaySubmissions();
           await tg(token, "sendMessage", {
             chat_id: chat_id,
-            text: `卷王一共刷了 ${profile} 道题，其中今天刷了 ${todaySubmissions.length} 题，你呢？`
+            text: `卷王一共刷了 ${ACTotal} 题，今天提交了 ${
+              todaySubmissions.length
+            } 次，AC 了 ${ACTotal - pastACTotal} 题，你呢？`
           });
           break;
       }
@@ -65,22 +56,15 @@ async function handleRequest(request) {
   return new Response("ok", { status: 200 });
 }
 
-async function handleCronRequest() {
-  let submissions = await getSubmission();
-  let lastSubmitTime = await LEETCODE.get("submitTime");
-  let newSubmissions = submissions.filter(submission => {
-    let submitTime = submission["submitTime"];
-    return submitTime > lastSubmitTime;
-  });
-  if (newSubmissions.length > 0) {
-    await tg(token, "sendMessage", {
-      chat_id: chat_id,
-      text: `卷王刚才又刷了 ${newSubmissions.length} 题。`
-    });
-    await LEETCODE.put("submitTime", newSubmissions[0]["submitTime"]);
+async function handleCronRequest(event) {
+  switch (event.cron) {
+    case "*/5 * * * *":
+      await notifySubmissions();
+      break;
+    case "0 0 * * *":
+      await updateACTotal();
+      break;
   }
-
-  return new Response("ok", { status: 200 });
 }
 
 async function tg(token, type, data) {
@@ -119,7 +103,7 @@ const submission_data = {
   }
 };
 
-async function getProfile() {
+async function getACTotal() {
   let data = await (
     await fetch(base_url, {
       method: "POST",
@@ -134,7 +118,7 @@ async function getProfile() {
   ];
 }
 
-async function getSubmission() {
+async function getSubmissions() {
   let data = await (
     await fetch(base_url, {
       method: "POST",
@@ -145,4 +129,40 @@ async function getSubmission() {
     })
   ).json();
   return await data["data"]["recentSubmissions"];
+}
+
+async function getTodaySubmissions() {
+  let submissions = await getSubmissions();
+  return submissions.filter(submission => {
+    let submitTime = dayjs(submission["submitTime"] * 1000).tz("Asia/Shanghai");
+    let startTime = dayjs()
+      .tz("Asia/Shanghai")
+      .startOf("day");
+    let endTime = dayjs()
+      .tz("Asia/Shanghai")
+      .endOf("day");
+    return submitTime.isBetween(startTime, endTime);
+  });
+}
+
+async function notifySubmissions() {
+  let submissions = await getSubmissions();
+  let lastSubmitTime = await LEETCODE.get("submitTime");
+  let newSubmissions = submissions.filter(submission => {
+    let submitTime = submission["submitTime"];
+    return submitTime > lastSubmitTime;
+  });
+  let todaySubmissions = await getTodaySubmissions();
+  if (newSubmissions.length > 0) {
+    await tg(token, "sendMessage", {
+      chat_id: chat_id,
+      text: `卷王刚才又提交了 ${newSubmissions.length} 次，今天一共提交了 ${todaySubmissions.length} 次。`
+    });
+    await LEETCODE.put("submitTime", newSubmissions[0]["submitTime"]);
+  }
+}
+
+async function updateACTotal() {
+  let acTotal = await getACTotal();
+  await LEETCODE.put("acTotal", acTotal);
 }
