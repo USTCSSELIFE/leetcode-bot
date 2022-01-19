@@ -1,4 +1,8 @@
 import config from "./config.json";
+import dayjs from "dayjs";
+import isBetween from "dayjs/plugin/isBetween";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 
 const token = config["token"];
 const bot_name = config["bot_name"];
@@ -6,6 +10,10 @@ const master_id = config["master_id"];
 const chat_id = config["chat_id"];
 const base_url = "https://leetcode-cn.com/graphql";
 const leetcode_username = config["leetcode_username"];
+
+dayjs.extend(isBetween);
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 addEventListener("fetch", event => {
   event.respondWith(handleRequest(event.request));
@@ -34,9 +42,16 @@ async function handleRequest(request) {
           let profile = await getProfile();
           let submissions = await getSubmission();
           let todaySubmissions = submissions.filter(submission => {
-            let submitTime = new Date(submission["submitTime"] * 1000);
-            let { endTime, startTime } = getTodayStartTimeAndEndTime();
-            return submitTime >= startTime && submitTime <= endTime;
+            let submitTime = dayjs(submission["submitTime"] * 1000).tz(
+              "Asia/Shanghai"
+            );
+            let startTime = dayjs()
+              .tz("Asia/Shanghai")
+              .startOf("day");
+            let endTime = dayjs()
+              .tz("Asia/Shanghai")
+              .endOf("day");
+            return submitTime.isBetween(startTime, endTime);
           });
           await tg(token, "sendMessage", {
             chat_id: chat_id,
@@ -130,12 +145,4 @@ async function getSubmission() {
     })
   ).json();
   return await data["data"]["recentSubmissions"];
-}
-
-function getTodayStartTimeAndEndTime(time) {
-  time = time ? time : new Date();
-  return {
-    startTime: new Date(time.setHours(0, 0, 0, 0)),
-    endTime: new Date(time.setHours(23, 59, 59, 999))
-  };
 }
