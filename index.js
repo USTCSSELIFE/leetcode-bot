@@ -39,14 +39,10 @@ async function handleRequest(request) {
           });
           break;
         case "progress":
-          let ACTotal = await getACTotal();
-          let pastACTotal = await LEETCODE.get("acTotal");
-          let todaySubmissions = await getTodaySubmissions();
+          let { ACTotal, todayACTotal, todaySubmissions } = await getProfile();
           await tg(token, "sendMessage", {
             chat_id: chat_id,
-            text: `卷王一共刷了 ${ACTotal} 题，今天提交了 ${
-              todaySubmissions.length
-            } 次，AC 了 ${ACTotal - pastACTotal} 题，你呢？`
+            text: `卷王一共刷了 ${ACTotal} 题，今天提交了 ${todaySubmissions} 次，AC 了 ${todayACTotal} 题，你呢？`
           });
           break;
       }
@@ -152,11 +148,11 @@ async function notifySubmissions() {
     let submitTime = submission["submitTime"];
     return submitTime > lastSubmitTime;
   });
-  let todaySubmissions = await getTodaySubmissions();
+  let { todayACTotal, todaySubmissions } = await getProfile();
   if (newSubmissions.length > 0) {
     await tg(token, "sendMessage", {
       chat_id: chat_id,
-      text: `卷王刚才又提交了 ${newSubmissions.length} 次，今天一共提交了 ${todaySubmissions.length} 次。`
+      text: `卷王刚才又提交了 ${newSubmissions.length} 次，今天一共提交了 ${todaySubmissions} 次，AC 了 ${todayACTotal} 题。`
     });
     await LEETCODE.put("submitTime", newSubmissions[0]["submitTime"]);
   }
@@ -165,4 +161,15 @@ async function notifySubmissions() {
 async function updateACTotal() {
   let acTotal = await getACTotal();
   await LEETCODE.put("acTotal", acTotal);
+}
+
+async function getProfile() {
+  let ACTotal = await getACTotal();
+  let pastACTotal = await LEETCODE.get("acTotal");
+  let todaySubmissions = await getTodaySubmissions();
+  return {
+    ACTotal,
+    todayACTotal: ACTotal - pastACTotal,
+    todaySubmissions: todaySubmissions.length
+  };
 }
