@@ -8,7 +8,7 @@ const token = config["token"];
 const bot_name = config["bot_name"];
 const master_id = config["master_id"];
 const chat_id = config["chat_id"];
-const base_url = "https://leetcode-cn.com/graphql";
+const base_url = "https://leetcode.cn/graphql";
 const leetcode_username = config["leetcode_username"];
 
 dayjs.extend(isBetween);
