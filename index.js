@@ -57,7 +57,7 @@ async function handleCronRequest(event) {
     case "*/5 * * * *":
       await notifySubmissions();
       break;
-    case "0 18 * * *":
+    case "0 16 * * *":
       await updateACTotal();
       break;
   }
